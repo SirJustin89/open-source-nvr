@@ -5,12 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx -y node@22 ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "server": "node lib/server/index.js",
+    "server:watch": "npx nodemon --watch lib --exec node lib/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
+  },
+  "desktop": {
+    "install": "bash build/install.sh",
+    "install:yes": "bash build/install.sh --yes",
+    "install:dry": "bash build/install.sh --dry-run",
+    "uninstall": "bash build/uninstall.sh"
   },
   "eslintConfig": {
     "extends": []
