@@ -83,7 +83,7 @@ deactivate
 ### To manually run the server
 
 ```
-PATH="$PWD/.venv/bin:$PATH" LOG_LEVEL=info node ./lib/index.js
+PATH="$PWD/.venv/bin:$PATH" LOG_LEVEL=info node ./lib/server/index.js
 ```
 
 Set `LOG_LEVEL` to `debug` for verbose logging, or `error` for minimal output.

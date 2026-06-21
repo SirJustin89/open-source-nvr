@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build TypeScript server
+        run: npx tsc
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python detector (stub only — no heavy ML deps)
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          # Install only the package metadata so the stub module is importable;
+          # skip heavy optional deps (opencv, onnxruntime, rknn-toolkit2)
+          .venv/bin/pip install --no-deps -e ./ai
+
+      - name: Run tests
+        run: PATH="$PWD/.venv/bin:$PATH" npm test

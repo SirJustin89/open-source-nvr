@@ -35,7 +35,7 @@ import {
   Spinner
 } from "@fluentui/react-components";
 import { Alert } from '@fluentui/react-components/unstable';
-import { Dismiss12Regular, Folder16Regular, KeyCommand16Regular, Camera16Regular, NetworkAdapter16Regular, Password16Regular } from "@fluentui/react-icons";
+import { Dismiss12Regular, Folder16Regular, KeyCommand16Regular, Camera16Regular, NetworkAdapter16Regular, Password16Regular, ScanCameraRegular } from "@fluentui/react-icons";
 
 
 const useStyles = makeStyles({
@@ -63,6 +63,17 @@ const useStyles = makeStyles({
     paddingLeft: 0,
     display: "flex",
     gridGap: tokens.spacingHorizontalXXS,
+  },
+  scanResultItem: {
+    padding: '6px 10px',
+    cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    ':hover': {
+      backgroundColor: tokens.colorNeutralBackground3Hover,
+    },
   },
 });
 
@@ -176,8 +187,20 @@ export function PanelSettings({panel, setPanel, data, getServerData}) {
     const [error, setError] = React.useState(null)
     const [diskStatus, setDiskStatus] = React.useState(null)
     const [diskStatusLoading, setDiskStatusLoading] = React.useState(false)
+    const [scanState, setScanState] = React.useState({ loading: false, results: null, error: null })
 
     const styles = useStyles();
+
+    function runNetworkScan() {
+        setScanState({ loading: true, results: null, error: null })
+        fetch('/api/scan')
+            .then(res => {
+                if (!res.ok) throw new Error(`Unable to scan network (${res.status}). Please try again.`)
+                return res.json()
+            })
+            .then(data => setScanState({ loading: false, results: data.results || [], error: null }))
+            .catch(err => setScanState({ loading: false, results: null, error: String(err) }))
+    }
 
     // Fetch disk status when settings panel opens
     React.useEffect(() => {
@@ -553,6 +576,44 @@ export function PanelSettings({panel, setPanel, data, getServerData}) {
                       validationMessage={getError('ip')}>
                       <Input style={{"width": "100%"}} contentBefore={<NetworkAdapter16Regular/>}  required value={panel.values.ip} onChange={(_, data) => updatePanelValues('ip', data.value)} />
                     </Field>
+
+                    { panel.key === 'new' && (
+                      <div>
+                        <Button
+                          icon={scanState.loading ? <Spinner size="tiny" /> : <ScanCameraRegular />}
+                          disabled={scanState.loading}
+                          onClick={runNetworkScan}
+                          size="small"
+                          appearance="outline">
+                          {scanState.loading ? 'Scanning…' : 'Scan Network for Cameras'}
+                        </Button>
+                        { scanState.error && (
+                          <Alert intent="error" style={{marginTop: '6px'}}>{scanState.error}</Alert>
+                        )}
+                        { scanState.results !== null && scanState.results.length === 0 && !scanState.loading && (
+                          <Text size={200} style={{display:'block', marginTop:'6px', color: tokens.colorNeutralForeground3}}>No cameras found on local network.</Text>
+                        )}
+                        { scanState.results && scanState.results.length > 0 && (
+                          <div style={{marginTop:'8px', border:`1px solid ${tokens.colorNeutralStroke1}`, borderRadius:'4px', maxHeight:'160px', overflowY:'auto'}}>
+                            { scanState.results.map(r => (
+                              <div
+                                key={r.ip}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => updatePanelValues('ip', r.ip)}
+                                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && updatePanelValues('ip', r.ip)}
+                                className={styles.scanResultItem}
+                              >
+                                <span style={{fontWeight: 500}}>{r.ip}</span>
+                                <span style={{fontSize:'12px', color: tokens.colorNeutralForeground3}}>
+                                  {r.vendor ? `${r.vendor} · ` : ''}{r.openPorts.join(', ')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <Field
                       label="Camera Password (display on create only)"

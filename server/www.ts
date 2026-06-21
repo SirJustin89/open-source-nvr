@@ -16,6 +16,7 @@ import { sseManager, formatMovementForSSE } from './sse-manager.js';
 import { diskCheck, catalogVideo, DiskCheckReturn } from './diskcheck.js';
 import type { Logger } from 'winston';
 import { registry } from './metrics.js';
+import { scanSubnet, detectLocalSubnet } from './network-scan.js';
 
 // Types
 export interface Settings {
@@ -830,6 +831,30 @@ stream${n + segmentInt - preseq}.ts`).join("\n") + "\n" + "#EXT-X-ENDLIST\n";
                     }
                 }
             } else {
+                ctx.status = 500;
+            }
+        })
+        .get('/scan', async (ctx) => {
+            const subnetParam = ctx.query['subnet'] as string | undefined;
+            try {
+                const subnet = subnetParam ?? detectLocalSubnet();
+                // Validate subnet prefix — each octet must be a number 0–255
+                if (subnet) {
+                    const parts = subnet.split('.');
+                    const valid = parts.length === 3 && parts.every(p => /^\d+$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+                    if (!valid) {
+                        ctx.body = { error: 'Invalid subnet prefix' };
+                        ctx.status = 400;
+                        return;
+                    }
+                }
+                logger.info('Network scan started', { subnet });
+                const results = await scanSubnet(subnet);
+                logger.info('Network scan complete', { found: results.length, subnet });
+                ctx.body = { subnet: subnet ?? null, results };
+            } catch (e: any) {
+                logger.error('Network scan failed', { error: String(e) });
+                ctx.body = { error: String(e) };
                 ctx.status = 500;
             }
         })
