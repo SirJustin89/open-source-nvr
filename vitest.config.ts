@@ -8,11 +8,7 @@ export default defineConfig({
         testTimeout: 60000,
         hookTimeout: 30000,
         pool: 'forks', // Use separate processes for better isolation
-        poolOptions: {
-            forks: {
-                singleFork: true // Run tests sequentially to avoid resource conflicts
-            }
-        },
+        singleFork: true, // Run tests sequentially to avoid resource conflicts
         coverage: {
             provider: 'v8',
             reporter: ['text', 'text-summary', 'html'],
