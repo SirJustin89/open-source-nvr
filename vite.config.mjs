@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       manifest: {
-        name: 'Open Source NVR',
-        short_name: 'NVR',
-        description: 'Open Source NVR',
+        name: 'NvR Scan',
+        short_name: 'NvR Scan',
+        description: 'NvR Scan',
         theme_color: '#000000',
         background_color: '#ffffff',
         display: 'standalone',
